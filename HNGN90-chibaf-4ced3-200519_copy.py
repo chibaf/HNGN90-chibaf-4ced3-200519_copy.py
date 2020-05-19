@@ -43,8 +43,6 @@ v <=> (Q/H)
 		v += dt*F/m
 """
 
-Troom=20
-
 def W_cool():
 	s=""" Cooling power (J/sec)
 	refer HNGN82_200427
@@ -52,13 +50,10 @@ def W_cool():
 	Troom=20
 	Q=stored heat(J)
 	"""
-
 	Hcond=0.2
 	W=Hcond*(dT+Ttarget-Troom)
 	return W
 
-from matplotlib import pyplot as plt
-from matplotlib import animation as animation
 import numpy as np
 import serial
 import time
@@ -98,6 +93,7 @@ y=[0]*10
 regex = re.compile('\d+')
 data=[]
 flag=0
+Troom=20
 W_heat=50 #=280,(J/sec) initial condition
 itime=0
 sum_error=0
@@ -124,6 +120,7 @@ while 1:
     dQ=0
 
     line = ser1.readline()
+    print(line)
     match = regex.findall(str(line))
     data.append(itime*0.1)
     data.append(float(match[4]+"."+match[5]))
@@ -136,24 +133,10 @@ while 1:
     data.append(float(match[18]+"."+match[19]))
     data.append(float(match[20]+"."+match[21]))
     data.append(float(match[22]+"."+match[23]))
-    print(data[2],data[4],data[5])
-    print(line)
-    for val in data:
-      flag+=1
-      f.write(str(val)); 
-      if(flag<11): 
-        f.write(", ")
-    f.write("\n")
-    flag=0
-    itime+=1
 	
-	 #for i in range(int(50/dt)):
-	 #  t = i*dt
 	#Tc thermo-couple-reading
     T=data[4] #unit=Cdegree) reading from Tc
     print (data)
-    data=[]
-	#  print("T=",f'{T:.4f}')
     print("T=",T)
     dT=error_T=T-Ttarget
     integral_error+=error_T*dt
@@ -161,14 +144,13 @@ while 1:
     Told = T
     print("dT=",dT)
     Q=(T+273.15)/rCp
-#    print("Q=",Q)
     print("W_cool=",W_cool())
     print("W_heat=",W_heat)
     x=range(0, 10, 1)
-#    set_ylim([0,300])
     y.insert(0, T)
     y.pop(10)
     clf()
+    ylim(0, 400)
     plot(x, y)
     pause(0.05)
 #    show()
@@ -181,6 +163,9 @@ while 1:
     print("W_heat=",W_heat)
     print("integral_error=", integral_error)
     print("diffT/dt      =",diffT/dt)
+    data.append(W_heat)
+    data.append(integral_error)
+    data.append(diffT/dt)
 #    dQ=dt*(W_heat-W_cool())
 #    dQ=dt*(W_heat)
 #    print("dQ=",dQ,"\n")
@@ -192,18 +177,19 @@ while 1:
       val=int(W_heat/W_heat_max*255)%256		
     a = val.to_bytes(1, byteorder="little")
     ser2.write(a)
+    for val in data:
+      flag+=1
+      f.write(str(val)); 
+      if(flag<14): 
+        f.write(", ")
+    f.write("\n")
+    flag=0
+    itime+=1
+    data=[]
 
-#xlabel('time (s)')
-#ylabel('voltage (mV)')
-#title('About as simple as it gets, folks')
-#grid(True)
   except KeyboardInterrupt:
     print ('exiting')
     break
-
-
-
-
 
 f.close()
 ser1.flush()
