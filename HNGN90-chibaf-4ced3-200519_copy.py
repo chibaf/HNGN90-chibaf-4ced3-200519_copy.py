@@ -119,10 +119,10 @@ while 1:
     TtargetK=Ttarget+273.15 
     dQ=0
 
-    line = ser1.readline()
+    line = ser1.readline() #read logger data
     print(line)
     match = regex.findall(str(line))
-    data.append(itime*0.1)
+    data.append(itime*0.1)    # set time and temps to data
     data.append(float(match[4]+"."+match[5]))
     data.append(float(match[6]+"."+match[7]))
     data.append(float(match[8]+"."+match[9]))
@@ -163,7 +163,7 @@ while 1:
     print("W_heat=",W_heat)
     print("integral_error=", integral_error)
     print("diffT/dt      =",diffT/dt)
-    data.append(W_heat)
+    data.append(W_heat)         # set PID terms to data
     data.append(integral_error)
     data.append(diffT/dt)
 #    dQ=dt*(W_heat-W_cool())
@@ -177,7 +177,7 @@ while 1:
       val=int(W_heat/W_heat_max*255)%256		
     a = val.to_bytes(1, byteorder="little")
     ser2.write(a)
-    for val in data:
+    for val in data:   # write out data to csv file
       flag+=1
       f.write(str(val)); 
       if(flag<14): 
